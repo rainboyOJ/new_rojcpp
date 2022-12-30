@@ -14,6 +14,7 @@ include_directories(libs/tinyasync/include)
 
 # add_subdirectory("some_fold")
 
-add_executable(test "src/echo_server_timeout.cpp")
+aux_source_directory(src SRC_LIST)
+add_executable(${PROJECT_NAME} ${SRC_LIST})
 
 # target_link_libraries(test PRIVATE Threads::Threads)
