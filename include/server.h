@@ -4,6 +4,7 @@
 #include <iostream>
 #include <thread>
 #include "tinyasync/tinyasync.h"
+#include "debug.h"
 using namespace tinyasync;
 
 class Session;
@@ -16,6 +17,9 @@ class server {
         std::thread m_thread;
         int m_id;
     public:
+        void join(){
+            m_thread.join();
+        }
 
         server(int i,Acceptor & acc){
             m_id = i;
@@ -72,6 +76,8 @@ Task<> server::deal(Connection conn){
             std::cout << e.what() << "\n";
         }
         if(nread == 0 ) break;
+        debug("read count is",nread);
+        break;
     }
 
     // 进行相应的处理
