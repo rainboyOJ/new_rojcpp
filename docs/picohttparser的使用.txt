@@ -1,0 +1,49 @@
+phr_parse_request 的使用
+
+
+有如下的一个http 请求头
+
+```
+GET /hello HTTP/1.1
+Accept-Language: zh-cn,zh;q=0.5
+foo: bar
+
+```
+
+
+
+char buf[4096], *method, *path;
+int pret, minor_version;
+struct phr_header headers[100];
+size_t buflen = 0, prevbuflen = 0, method_len, path_len, num_headers;
+ssize_t rret;
+
+    pret = phr_parse_request(buf, buflen, &method, &method_len, &path, &path_len,
+                             &minor_version, headers, &num_headers, prevbuflen);
+
+    for (i = 0; i != num_headers; ++i) {
+    printf("%.*s: %.*s\n", (int)headers[i].name_len, headers[i].name,
+           (int)headers[i].value_len, headers[i].value);
+
+
+
+参数
+
+```
+1. buf      ,char []    , 指针 解析数据的起始地址
+2. method   , char *    , 被修改成指向buffer中method的位置
+3. method_len, int    , 被修改成method的长度
+4. path     , char *  , 同method,指向path的位置
+5. path_len , int     , 同method_len
+6. minor_version, int , http协议的版本
+7. headers  , struct phr_header 数组,本质是一系列的指针集合
+8. number_headers, int , 被修改成header的数量
+9.prevbuflen ,额,不知道有什么意义,难道知道这个东西,就可以不用从头解析了?
+```
+
+
+返回值 pret
+
+> 0  解析完成
+= -1 出错
+= -2 末完成
