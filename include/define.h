@@ -15,6 +15,7 @@ namespace rojcpp {
     //响应头 content_type 内部的类型
     enum class content_type {
         string,
+        html,
         json,
         multipart,
         urlencoded,
@@ -22,21 +23,14 @@ namespace rojcpp {
         octet_stream,
         websocket,
         unknown,
-    };
-
-    //请求头 内的数据类型
-    enum class req_content_type{
-        html,
-        json,
-        string,
-        multipart,
         none
     };
 
-    constexpr inline auto HTML = req_content_type::html;
-    constexpr inline auto JSON = req_content_type::json;
-    constexpr inline auto TEXT = req_content_type::string;
-    constexpr inline auto NONE = req_content_type::none;
+
+    constexpr inline auto HTML = content_type::html;
+    constexpr inline auto JSON = content_type::json;
+    constexpr inline auto TEXT = content_type::string;
+    constexpr inline auto NONE = content_type::none;
 
     inline const std::string_view STATIC_RESOURCE = "rojcpp_static_resource";
     inline const std::string CSESSIONID = "CSESSIONID";
