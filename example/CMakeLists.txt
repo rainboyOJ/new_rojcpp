@@ -15,6 +15,7 @@ include_directories(../libs/tinyasync/include)
 add_subdirectory("gzip")
 add_subdirectory("tools")
 add_subdirectory("all_headers")
+add_subdirectory("buffers")
 
 
 # target_link_libraries(test PRIVATE Threads::Threads)
