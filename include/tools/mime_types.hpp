@@ -493,11 +493,11 @@ namespace rojcpp {
     { ".7z", "application/x-7z-compressed" },
     };
 
-    static std::map<rojcpp::req_content_type,std::string_view> res_mime_map = {
-            {rojcpp::req_content_type::html,"text/html; charset=UTF-8"},
-            {rojcpp::req_content_type::json,"application/json; charset=UTF-8"},
-            {rojcpp::req_content_type::string,"text/plain; charset=UTF-8"},
-            {rojcpp::req_content_type::multipart,"multipart/form-data; boundary="}
+    static std::map<rojcpp::content_type,std::string_view> res_mime_map = {
+            {rojcpp::content_type::html,"text/html; charset=UTF-8"},
+            {rojcpp::content_type::json,"application/json; charset=UTF-8"},
+            {rojcpp::content_type::string,"text/plain; charset=UTF-8"},
+            {rojcpp::content_type::multipart,"multipart/form-data; boundary="}
     };
 
     inline std::string_view get_mime_type(std::string_view extension) {

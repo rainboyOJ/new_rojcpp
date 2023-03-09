@@ -11,8 +11,11 @@
 #pragma once
 
 #include <memory_resource>
-#include "tinyasync/tinyasync.h"
+// #include "tinyasync/tinyasync.h"
 
+
+namespace rojcpp {
+    
 
 // 处
 enum class PROCESS_STATE  {
@@ -25,28 +28,38 @@ enum class PROCESS_STATE  {
 };
 
 
-class Session;
+class http_session;
 
-// 一个指向Session内部的 成员函数指针
-using continue_work_fptr = PROCESS_STATE(Session::*)();
+// 一个指向http_session内部的 成员函数指针
+using continue_work_fptr = PROCESS_STATE(http_session::*)();
 
 
-class Session {
+class http_session {
     private:
         std::pmr::memory_resource * m_pool; //内存池
         continue_work_fptr m_continue_work = nullptr;
-        tinyasync::Connection m_ta_conn; //tinyasync的 Connection
+        // tinyasync::Connection m_ta_conn; //tinyasync的 Connection
 
-        http_handle //
+        // http_handle //
     public:
 
-        Session(std::pmr::memory_resource * mr) : m_pool{mr}
+        http_session(std::pmr::memory_resource * mr) : m_pool{mr}
         {}
 
-        Session(tinyasync::Connection && conn) : m_ta_conn( std::move() )
-        {}
+        // http_session(tinyasync::Connection && conn) : m_ta_conn( std::move() )
+        // {}
 
+        //核心1 : 读取
+        // tinyasync::Task<> headle_read();
+
+        //核心2 : 异步写入
+        // tinyasync::Task<> headle_write();
+
+        //核心3: 数据处理与路由
+        void process();
 
 
         
 };
+
+} // end namespace rojcpp

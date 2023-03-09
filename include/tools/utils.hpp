@@ -72,6 +72,7 @@ namespace rojcpp {
             if (s1.length() != s2.length())
                 return -1;
 
+            size_t n = s1.length();
             for (size_t i = 0; i < n; ++i) {
                 size_t n = s1.length();
                 if (!base_t::eq(s1[i], s2[i])) {
@@ -245,22 +246,22 @@ namespace rojcpp {
         }
     }
 
-    inline std::string get_content_type_str(req_content_type type) {
+    inline std::string get_content_type_str(content_type type) {
         std::string str;
         switch (type) {
-        case req_content_type::html:
+        case content_type::html:
             str = "text/html; charset=UTF-8";
             break;
-        case req_content_type::json:
+        case content_type::json:
             str = "application/json; charset=UTF-8";
             break;
-        case req_content_type::string:
+        case content_type::string:
             str = "text/html; charset=UTF-8";
             break;
-        case req_content_type::multipart:
+        case content_type::multipart:
             str = "multipart/form-data; boundary=";
             break;
-        case req_content_type::none:
+        case content_type::none:
         default:
             break;
         }

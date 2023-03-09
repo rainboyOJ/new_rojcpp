@@ -5,6 +5,7 @@
 #include <thread>
 #include "tinyasync/tinyasync.h"
 #include "debug.h"
+#include "http_session.h"
 using namespace tinyasync;
 
 class Session;
@@ -63,7 +64,15 @@ Task<> server::listen(IoContext & ctx){
 
 //对连接进行处理
 Task<> server::deal(Connection conn){
+
+    //1. 创建一个http_session
+    rojcpp::http_session Session( std::pmr::new_delete_resource() );
+
+    //2.异步读取
+    //3.处理数据与路由
+    //4.异步读取
     
+    /*
     char buff[1024];
     //1 读取数据,保证数据读取完毕
     std::size_t nread=  0;
@@ -96,5 +105,6 @@ Task<> server::deal(Connection conn){
         if(!remain)
             break;
     }
+    */
 
 }
