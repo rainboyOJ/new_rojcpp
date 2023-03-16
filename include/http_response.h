@@ -7,14 +7,27 @@
 #include "tools/cookie.h"
 #include "tools/response_cv.hpp"
 #include "all_headers.h"
+#include "tools/buffers.h"
+
+class http_session;
 
 
 namespace rojcpp {
 
 class response {
-public:
-    response() {}
+    friend class http_session;
 
+public:
+
+    
+    explicit
+    response(std::pmr::memory_resource * mpr) 
+        :m_buff(mpr)
+    {}
+
+    /**
+     * constexpr 编译期函数
+     */
     template<status_type status,content_type content_type, size_t N>
     constexpr auto set_status_and_content
         (
@@ -23,22 +36,23 @@ public:
         )
     {
         // 类似 "HTTP/1.1 200 OK\r\n"
-        constexpr auto status_str = to_rep_string(status);
+        constexpr std::string_view status_str = to_rep_string(status);
 
         // 类似 Content-type:application/json:
-        constexpr auto type_str   = to_content_type_str(content_type);
+        constexpr std::string_view type_str   = to_content_type_str(content_type);
 
         // 类似 Content-length: 100
+        // type is std::array<char,int = 19>
         constexpr auto len_str = num_to_string<N-1>::value;
 
-        m_rep_str.append(status_str)
-                 .append(type_str)
-                 .append(rep_server) // "Server: rojcpp\r\n";
-                 .append(len_str.data(),len_str.sizel());
-
-        m_rep_str.append("\r\n");
-
-        m_rep_str.append(content);
+        m_buff.clear();
+        
+        append_buff(status_str);
+        append_buff(type_str);
+        append_buff(rep_server);
+        append_buff(len_str.data(),len_str.size());
+        append_buff("\r\n");
+        append_buff(content);
 
     }
 
@@ -48,7 +62,7 @@ public:
     void enable_respone_time();
 
     //核心 TODO
-    std::string build_response_buffer();
+    std::string_view build_response_buffer();
 
     std::vector<char> to_buffers();
 
@@ -83,6 +97,13 @@ public:
 
 private:
 
+    //push data to m_buff
+    void append_buff(const char * buff,const std::size_t buff_size);
+
+    inline void append_buff(std::string_view buff) {
+        append_buff(buff.data(), buff.length());
+    }
+
     /**
      * 得到
      */
@@ -101,6 +122,8 @@ private:
     __string m_rep_str;     //这里最后要用buffer替换
 
     std::shared_ptr<cookie> cookie_sh_ptr = nullptr;
+
+    rojcpp::Buffer<> m_buff;
 };
 
 

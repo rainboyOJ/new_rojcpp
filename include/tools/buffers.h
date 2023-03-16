@@ -3,6 +3,7 @@
  * 基于pmr
  */
 
+#pragma once
 #include <memory>
 #include <cstring>
 #include <memory_resource>
@@ -24,6 +25,8 @@ namespace rojcpp {
             T * data(); //数据的起始位置
 
             T * write_data(); //可以写入的空间的位置
+
+            void clear();
 
             void update_used_sized(std::size_t size_);
             std::size_t used_size() const; //已经这写入的空间
@@ -105,6 +108,11 @@ namespace rojcpp {
     template<typename T ,typename Alloc>
     void Buffer<T,Alloc>::update_used_sized(std::size_t size_) {
         used_mem += size_;
+    }
+
+    template<typename T ,typename Alloc>
+    void Buffer<T,Alloc>::clear() {
+        used_mem = 0;
     }
 
 

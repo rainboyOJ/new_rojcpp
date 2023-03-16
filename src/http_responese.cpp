@@ -49,5 +49,15 @@ void response::reset() {
     m_rep_str.clear();
 }
 
+void response::append_buff(const char * buff,const std::size_t buff_size) {
+    if( m_buff.empty() )
+        m_buff.expand_size(32*1024); //default 32kb
+    while( m_buff.left_size() < buff_size)
+        m_buff.expand_twice_size();
+    
+    memcpy(m_buff.write_data(), buff, buff_size);
+    m_buff.update_used_sized(buff_size);
+}
+
 
 } // end namespace rojcpp
