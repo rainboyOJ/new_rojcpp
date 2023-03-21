@@ -29,6 +29,9 @@ class logger {
         logger(const char * finename,int line,LogLevel level,const char *funcName);
         ~logger();
 
+        //设置 线程 id
+        static void set_thread_id(int id);
+
         
         logStream & stream() { return m_logStream; }
 
@@ -66,6 +69,7 @@ extern logger::LogLevel g_log_level;
 inline logger::LogLevel logLevel() {
     return  g_log_level;
 }
+
 
 constexpr std::string_view getLevelName(logger::LogLevel level) {
     using namespace std::literals::string_view_literals;

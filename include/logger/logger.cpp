@@ -1,11 +1,17 @@
 #include <iostream>
 #include "logger.h"
+#include <algorithm>
+
+#include <cstring>
+#include <thread>
+#include <sstream>
 
 namespace ThreadInfo {
     __thread char t_errnobuff[512];
-    __thread char t_time[64];
+    __thread char t_time[66];
     __thread std::size_t t_lastSecond;
-    
+    //__thread std::hash<std::thread::id> th_id ;// = std::this_thread::get_id();
+    __thread char t_thread_id[64] = {0};
 } // end namespace ThreadInfo
 
 namespace LOGGER {
@@ -15,6 +21,32 @@ const char * getErrnoMsg(int savedErrno) {
             ThreadInfo::t_errnobuff, 
             sizeof(ThreadInfo::t_errnobuff)
             );
+}
+
+const char * get_thread_id() {
+    if( ThreadInfo::t_thread_id[0] == 0 ) {
+        std::stringstream ss;
+        ss << std::this_thread::get_id();
+        auto str = ss.str();
+        memcpy(ThreadInfo::t_thread_id+1,str.c_str(),str.length());
+        ThreadInfo::t_thread_id[0] = 1;
+    }
+    return ThreadInfo::t_thread_id+1;
+}
+
+void logger::set_thread_id(int id) {
+    ThreadInfo::t_thread_id[0] = 1;
+    auto * m_cur  = ThreadInfo::t_thread_id + 1;
+    auto * start  = ThreadInfo::t_thread_id + 1;
+    int num_len = 0;
+    int __id = id;
+    do { 
+        char c = __id % 10 + '0';
+        __id /= 10;
+        *m_cur++ = c;
+    } while ( __id !=0 ) ;
+    *m_cur = '\0';
+    std::reverse(start,m_cur);
 }
     
 logger::LogLevel g_log_level = logger::LogLevel::INFO;
@@ -48,8 +80,9 @@ logger::logger(LogLevel level,int savedErrno,const char *filename,int line)
      m_filename(filename)
     {
         formatTime();
+        m_logStream << get_thread_id() << ' ';
         m_logStream << getLevelName(level);
-
+        
         if( savedErrno != 0) {
             m_logStream << getErrnoMsg(savedErrno) 
                 << " (errno=" 
