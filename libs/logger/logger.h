@@ -35,7 +35,7 @@ class logger {
         
         logStream & stream() { return m_logStream; }
 
-        static LogLevel logLevel();
+        // static LogLevel getLogLevel();
         static void setLogLevel(LogLevel level);
 
         //输出函数 与 刷新缓冲区函数
@@ -66,7 +66,7 @@ class logger {
 
 extern logger::LogLevel g_log_level;
 
-inline logger::LogLevel logLevel() {
+inline logger::LogLevel getLogLevel() {
     return  g_log_level;
 }
 
@@ -90,18 +90,19 @@ constexpr std::string_view getLevelName(logger::LogLevel level) {
     return "INFO"sv;
 }
 
-#define LOG_DEBUG if ( logLevel() <= logger::LogLevel::DEBUG ) \
-        logger(__FILE_NAME__,__LINE__,logger::LogLevel::DEBUG,__func__).stream()
-
-
-#define LOG_INFO if ( logLevel() <= logger::LogLevel::INFO) \
-        logger(__FILE_NAME__,__LINE__,logger::LogLevel::INFO).stream()
-
-#define LOG_WARN logger(__FILE_NAME__,__LINE__,logger::LogLevel::WARN).stream()
-
-#define LOG_ERROR logger(__FILE_NAME__,__LINE__,logger::LogLevel::ERROR).stream()
-
-#define LOG_FATAL logger(__FILE_NAME__,__LINE__,logger::LogLevel::FATAL).stream()
 
 
 } // end namespace LOGGER
+  
+#define LOG_DEBUG if ( LOGGER::getLogLevel() <= LOGGER::logger::LogLevel::_DEBUG ) \
+    LOGGER::logger(__FILE_NAME__,__LINE__,LOGGER::logger::LogLevel::_DEBUG,__func__).stream()
+
+
+#define LOG_INFO if ( LOGGER::getLogLevel() <= LOGGER::logger::LogLevel::INFO) \
+        LOGGER::logger(__FILE_NAME__,__LINE__,LOGGER::logger::LogLevel::INFO).stream()
+
+#define LOG_WARN LOGGER::logger(__FILE_NAME__,__LINE__,LOGGER::logger::LogLevel::WARN).stream()
+
+#define LOG_ERROR LOGGER::logger(__FILE_NAME__,__LINE__,LOGGER::logger::LogLevel::ERROR).stream()
+
+#define LOG_FATAL LOGGER::logger(__FILE_NAME__,__LINE__,LOGGER::logger::LogLevel::FATAL).stream()
