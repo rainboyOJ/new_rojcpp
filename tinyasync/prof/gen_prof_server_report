@@ -1,1 +1,0 @@
-google-pprof --pdf ../build_linux/pingpong/pingpong_server prof_server.out  > prof_server.pdf
