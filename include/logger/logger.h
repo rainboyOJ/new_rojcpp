@@ -19,7 +19,7 @@ class logger {
     public:
         enum class LogLevel : int {
             TRACE,
-            DEBUG,
+            _DEBUG,
             INFO,
             WARN,
             ERROR, FATAL
@@ -76,7 +76,7 @@ constexpr std::string_view getLevelName(logger::LogLevel level) {
     switch ( level ) {
         case logger::LogLevel::INFO :
             return "INFO  "sv;
-        case logger::LogLevel::DEBUG:
+        case logger::LogLevel::_DEBUG:
             return "DEBUG "sv;
         case logger::LogLevel::TRACE:
             return "TRACE "sv;
