@@ -1,3 +1,0 @@
-[submodule "libs/tinyasync"]
-	path = libs/tinyasync
-	url = https://github.com/rainboyOJ/tinyasync
