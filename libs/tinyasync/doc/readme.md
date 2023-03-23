@@ -31,7 +31,7 @@ include
 
 先设计一个核心模块:`io_context`,把它叫作事件中心或者叫IO中心,基本上把需要的任务或事件都注册到它身上.
 
-它拥有一个大循环,我们称为`run`
+它拥有一个大循环,我们称为`run`,见下
 
 
 ```mermaid
@@ -41,6 +41,19 @@ flowchart
     abort -- N--> task1{{ has task }} -- Y --> f1[do task] --> abort;
 ```
 
+这时,你会问:
+
+- 如何向`io_context`传入`task`?
+- `task`是什么结构,如何调用?
+- 如何调用`evt.data.ptr`对应的函数?
+- coroutine设计在哪里呢?
+
+
+`io_context`里有一个`m_task_queue`的队列结构用来管理task的存入与取出.
+
+`evt.dta.ptr`就是`callback`这个模拟虚类.调用它可以跳转到不同的函数去执行.
+
+`task.h`,`awaiter.h`两个头文件是实现coroutine的主要位置.
 
 
 ## 功能模块
