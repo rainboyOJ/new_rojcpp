@@ -61,24 +61,15 @@ flowchart
 - [模拟虚类,callback](./functional/callback.md)
 - [日志调试](./functional/log.md),好的日志调试事半功倍,有些时候,相比使用gdb,节省很多的时间.
 - [`IoContext`事件中心](./io_context.md)
-- [awaiter](./awaiter.md),协程等待器,用于暂停协程
-
-- [`tash.h`],功能库,设定了协程的相关,来控制协程的运行行为,包括,
-  - 1.内存申请
-  - 2.生命周期
-  - 3.协程句柄,基类
-  - 4.协程生命结束的行为
-  - 非常有用的[`co_spawn`功能](./co_spawn.md)
+- coroutine(协程模块),由下面文件组成
+  - [`tash.h`](./task.md),功能库,设定了协程的相关,来控制协程的运行行为
+  - [`awaiter.h`](./awaiter.md),协程等待器,用于暂停协程
+  - [`dns_resolve`](./dns_resolver.md) 域名转ip
+- [缓冲](./buffer.md)
+- [内存池](./memory_pool.md)
 
 
 ## 概念/功能
-
-
-
-`buffer`,定义了两个类型的buffer来,提供内存buffer
-
-- 1. `Buffer`,本质是真正buffer的wrapper
-- 1. `ConstBuffer`,只读的buffer
 
 各种`Aawaiter`:
 
@@ -100,7 +91,6 @@ flowchart
 
 `dns_resolve` 异步的dns解析
 
-`memory_pool`基于`pmr`的内存池
 
 ## 解析
 

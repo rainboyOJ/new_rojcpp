@@ -1,23 +1,64 @@
 # task.h
 
-主要功能:实现了`coroutine`协程的`return object` 实现,使对应的协程具有以下的性质
+协程的实现相关[参考cppreference上的相关内容](https://en.cppreference.com/w/cpp/language/coroutines)
 
+主要功能:实现了`coroutine`协程的`promise object` 实现,来控制协程的运行行为,使对应的协程具有以下的性质
+
+- 1.内存申请
+- 2.生命周期
+- 3.协程句柄,基类
+- 4.协程生命结束的行为
+- 非常有用的[`co_spawn`功能](./co_spawn.md)
 - 内存申请
 
 类图
-```plaintext
 
-    struct TaskPromiseBase
+```mermaid
+---
+title: class in task.h
+---
+classDiagram
+    class TaskPromise
+    TaskPromiseWithResult <|-- TaskPromise
+    TaskPromiseWithAllocator <|-- TaskPromise
+    
 
-    template<class Result, class Alloc = std::allocator<std::byte> >
-    struct TaskPromise : TaskPromiseWithResult<Result>, TaskPromiseWithAllocator<Alloc> {
 
+    class Generator
+    class GeneratorPromiseWithResult
+    GeneratorPromiseWithResult <|-- GeneratorPromise
+    TaskPromiseWithAllocator   <|-- GeneratorPromise
 
-    template<class Result = void>
-    class TINYASYNC_NODISCARD Task
-        using promise_type = TaskPromiseWithResult<Result>;
-        using coroutine_handle_type =  std::coroutine_handle<promise_type>;
-        using result_type = Result;
+    class ExceptionPtrWrapper
+    class TaskPromiseBase
+    class PromiseResultMixin
+    TaskPromiseBase <|-- TaskPromiseWithResult
+    PromiseResultMixin <|-- TaskPromiseWithResult
+    
+    
+
+    TaskPromise *-- Task : Real Promise_type
+    TaskPromiseWithResult *.. Task : fake Promise_type
+    GeneratorPromise *-- Generator : Real Promise_type
+    GeneratorPromiseWithResult *.. Generator : fake Promise_type
+
+    class Task {
+        +coroutine_handle m_h
+        +promise()
+        +Result()
+        +swap()
+        +release()
+        +detach()
+        + can awaiter
+    }
+
+    class Generator {
+        + coroutine_handle m_coro
+        +next()
+        +get()
+        +begin()
+        +end()
+    }
 ```
 
 
