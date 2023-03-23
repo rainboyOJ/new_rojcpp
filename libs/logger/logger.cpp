@@ -6,12 +6,13 @@
 #include <thread>
 #include <sstream>
 
+
 namespace ThreadInfo {
-    __thread char t_errnobuff[512];
-    __thread char t_time[66];
-    __thread std::size_t t_lastSecond;
-    //__thread std::hash<std::thread::id> th_id ;// = std::this_thread::get_id();
-    __thread char t_thread_id[64] = {0};
+    thread_local char t_errnobuff[512];
+    thread_local char t_time[66];
+    thread_local std::size_t t_lastSecond;
+    //thread_local std::hash<std::thread::id> th_id ;// = std::this_thread::get_id();
+    thread_local char t_thread_id[64] = {0};
 } // end namespace ThreadInfo
 
 namespace LOGGER {
