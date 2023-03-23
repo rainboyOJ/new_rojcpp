@@ -1,10 +1,13 @@
-# tinyasync
+# 说明
 
-仓库地址: https://github.com/lhprojects/tinyasync
+[lhprojects/tinyasync](https://github.com/lhprojects/tinyasync) 是一基于c++20 coroutine(协程)的网络IO库.
+
+rojcpp使用了这个库,并进行了少量的修改.基于我写rojcpp的原则: 尽量自己完成所有的功或读懂所用的库的源码.
+所以下面我尽量详细的解释tinyasync的源码.
 
 fork到我的仓库: https://github.com/rainboyOJ/tinyasync
 
-一个由c++20协程编写的网络io库,想学习它的原理
+当然,你需要先学习使用c++20的coroutine,篇幅的原因,我不在这里讲解coroutine的使用.请参考我的博客(blog.roj.ac.cn)上相关的内容
 
 ## 文件结构
 
@@ -23,6 +26,10 @@ include
 ```
 
 ## 框架/组成/功能模块
+
+- 2. [日志调试](#),好的日志调试事半功倍,有些时候,相比使用gdb,节省很多的时间.
+- 3. [框架设计](#),我们总是通过把大的问题拆分成小的问题一一解决的方式来解决大的问题.
+- 4. [工具函数](#)
 
 ### 功能模块
 
@@ -79,37 +86,6 @@ include
 - [`co_spawn`抛出不管协程](./co_spawn.md)
 
 
-## 原理1: 不需要虚函数,实现多态
-
-前提：
-
-1. 只需要一个函数进行虚化，所以可以直接定义一个成员变量来存储指针
-
-
-类的布局图
-
-```
-+--------------------+            +--------------------+    
-|m_callback          |            |m_callback          |    
-|                    | A          |                    | A  
-+--------------------+            +--------------------+    
-|b_do_call<type C1>()|            |b_do_call<type C1>()|    
-|b_do_call<type C3>()|            |b_do_call<type C3>()|    
-|b_do_call<type C2>()| B          |b_do_call<type C2>()| B  
-|   ......           |            |   ......           |    
-+--------------------+            +--------------------+    
-|                    |            |                    |    
-|on_callback()       | C1         |on_callback()       | C2 
-|                    |            |                    |    
-+--------------------+            +--------------------+    
-```
-
-代码:`./code_by_self/callback.cpp`
-
-可以把所有的`c1,c2,c3`转成
-
-
-TODO 补充完整
 
 ## PostTask
 
