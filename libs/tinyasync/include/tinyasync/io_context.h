@@ -498,7 +498,7 @@ namespace tinyasync
 
         for (;;)
         {
-            printf("running... \n");
+            // printf("running... \n");
 
             if constexpr (k_multiple_thread)
             {

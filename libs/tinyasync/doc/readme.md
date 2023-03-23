@@ -25,14 +25,28 @@ include
     └── tinyasync.h     包含其它头文件
 ```
 
-## 框架/组成/功能模块
+## 框架设计
 
-- 2. [日志调试](#),好的日志调试事半功倍,有些时候,相比使用gdb,节省很多的时间.
-- 3. [框架设计](#),我们总是通过把大的问题拆分成小的问题一一解决的方式来解决大的问题.
-- 4. [工具函数](#)
+整个代码由下面几个功能组合来完成整体的功能
 
-### 功能模块
+先设计一个核心模块:`io_context`,把它叫作事件中心或者叫IO中心,基本上把需要的任务或事件都注册到它身上.
 
+它拥有一个大循环,我们称为`run`
+
+
+```mermaid
+flowchart
+    START --> abort{{abort?}} -- Y --> END
+    task1 -- N --> epoll_wait --> f2[Call each evt.data.ptr] --> abort ;
+    abort -- N--> task1{{ has task }} -- Y --> f1[do task] --> abort;
+```
+
+
+
+## 功能模块
+
+- [模拟虚类,callback](./functional/callback.md)
+- [日志调试](./functional/log.md),好的日志调试事半功倍,有些时候,相比使用gdb,节省很多的时间.
 - [`IoContext`事件中心](./io_context.md)
 - [awaiter](./awaiter.md),协程等待器,用于暂停协程
 
@@ -47,11 +61,6 @@ include
 ## 概念/功能
 
 
-整个代码由下面几个功能组合来完成整体的功能
-
-
-`io_context`事件中心或者叫IO中心,基本上需要的任务或事件
-都注册到它身上.
 
 `buffer`,定义了两个类型的buffer来,提供内存buffer
 
@@ -84,7 +93,6 @@ include
 
 - [`io_context`解析](./io_context.md)
 - [`co_spawn`抛出不管协程](./co_spawn.md)
-
 
 
 ## PostTask

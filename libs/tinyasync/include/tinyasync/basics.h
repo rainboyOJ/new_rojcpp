@@ -487,7 +487,7 @@ namespace tinyasync {
 
 #define TINYASYNC_CAT_(a, b) a##b
 #define TINYASYNC_CAT(a, b) TINYASYNC_CAT_(a, b)
-#define TINYASYNC_GUARD(...) log_prefix_guad TINYASYNC_CAT(log_prefix_guad_, __LINE__)(__VA_ARGS__)
+#define TINYASYNC_GUARD(...) log_prefix_guard TINYASYNC_CAT(log_prefix_guard_, __LINE__)(__VA_ARGS__)
 #define TINYASYNC_LOG(...) \
     do                     \
     {                      \
@@ -495,7 +495,7 @@ namespace tinyasync {
         printf("%s\n", out.c_str());\
     } while (0)
 
-#define TINYASYNC_LOG_NNL(...) do {\
+#define TINYASYNC_LOG_NNL(...) \
     do                     \
     {                      \
         auto out = get_log_str(__VA_ARGS__);\
@@ -535,11 +535,11 @@ namespace tinyasync {
         return out;
     }
 
-    struct log_prefix_guad
+    struct log_prefix_guard
     {
         std::size_t l;
 
-        log_prefix_guad(char const* fmt, ...) : l(0)
+        log_prefix_guard(char const* fmt, ...) : l(0)
         {
 
             char buf[1000];
@@ -555,7 +555,7 @@ namespace tinyasync {
             l = log_prefix.size();
         }
 
-        ~log_prefix_guad()
+        ~log_prefix_guard()
         {
             assert(l == log_prefix.size());
             log_prefix.pop_back();
