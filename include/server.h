@@ -4,9 +4,16 @@
 #include <iostream>
 #include <thread>
 #include "tinyasync/tinyasync.h"
-#include "debug.h"
+#include "logger/AsyncLogger.hpp"
 #include "http_session.h"
+
+#include "http_route.h"
+
+using namespace LOGGER;
 using namespace tinyasync;
+
+namespace rojcpp {
+    
 
 class Session;
 
@@ -17,12 +24,59 @@ class server {
         PoolResource m_pool;  //内存池
         std::thread m_thread;
         int m_id;
+
+
+        rojcpp::http_handle_func http_handle_ = nullptr;
+        rojcpp::http_handle_check_func http_handle_check_ = nullptr;
+        
+
     public:
+
+        static rojcpp::http_router m_http_route; //静态的route容器
+
+        //服务器的初始化
+        void init() {
+
+            http_handle_check_  = [this](request& req,response & res){
+                try  {
+                    bool find_route = m_http_route.route(
+                                req.get_method(),
+                                req.get_path(),
+                                req,res);
+                    if( find_route == false ) {
+                        res.set_status(status_type::not_found);
+                        return false;
+                    }
+                    return true;
+                }
+                catch( const std::exception & ex ) {
+                    res.set_status_and_content<status_type::internal_server_error, content_type::string>
+                        (ex.what()+std::string(" exception in business function"));
+
+                    return false;
+                }
+                catch (...) {
+                    // res.set_status_and_content(status_type::internal_server_error, "unknown exception in business function");
+                    res.set_status_and_content<status_type::internal_server_error, content_type::string>("unknown exception business function");
+                    return false;
+                }
+
+            };
+
+            http_handle_ = [this](request& req,response& res) {
+                //设置res的头??
+                // res.set_headers(req.get_headers()) // TODO
+                this->http_handle_check_(req,res);
+            };
+
+        }
+
         void join(){
             m_thread.join();
         }
 
         server(int i,Acceptor & acc){
+            init();
             m_id = i;
             m_acceptor = acc.reset_io_context(m_ctx);
         }
@@ -36,6 +90,12 @@ class server {
         void run(){
             m_thread = std::thread([this](){
 
+                //logger的相关设置
+                LOGGER::logger::set_thread_id(this->m_id);
+
+                LOG_DEBUG << "start run..\n";
+
+
                 try {
                     //1 初始化 内存池
                     //nothing
@@ -46,13 +106,15 @@ class server {
                     m_ctx.run();
                 }
                 catch(...) {
-                    printf("%s\n", to_string(std::current_exception()).c_str());
+                    // printf("%s\n", to_string(std::current_exception()).c_str());
+                    LOG_DEBUG << "has exception in run()";
                 }
             });
 
         }
     
 };
+
 
 Task<> server::listen(IoContext & ctx){
     for(;;){
@@ -71,18 +133,23 @@ Task<> server::deal(Connection conn){
      */
 
     //1. 创建一个http_session
-    rojcpp::http_session Session( std::pmr::new_delete_resource() );
+    rojcpp::http_session Session( std::pmr::new_delete_resource() ,
+            &http_handle_, //执行 路由
+            &http_handle_check_ //执行并检查 路由
+            );
 
     //3.处理数据与路由
     //4.异步读取
     
     // char buff[1024];
     //1 读取数据,保证数据读取完毕
-    // 2.异步读取
+    // 2.异步读取 ,TODO 更加细化的处理
     std::size_t nread=  0;
     for(;;) {
         try {
             auto [buff,buff_size] = Session.req_buff();
+
+            LOG_DEBUG << "get buff from Session";
             // nread = co_await conn.async_read_timeout(buff,buff_size);
             nread = co_await conn.async_read(buff,buff_size);
         }
@@ -96,11 +163,22 @@ Task<> server::deal(Connection conn){
 
 
         // check
-        if( Session.handle_read() != -2) // -2 represent header data not complete
+        LOG_DEBUG << "start Session parse_raw_request_data";
+        int parse_ret =  Session.parse_raw_request_data();
+        if( parse_ret == -2) // -2 represent header data not complete
+            continue;
+        else if( parse_ret == -1) {
+            auto [buff,buff_size] = Session.req_buff();
+            LOG_ERROR << "Parse Error: " ;
+            // std::cout   << std::string_view((char *)buff,buff_size) <<"\n";
+            throw std::runtime_error("parse_Error");
+            // TODO parse_Error
+        }
+        else // > 0
             break;
 
-        debug("read count is",nread);
     }
+    LOG_INFO << "read end and read count : " << nread;
 
     // 进行相应的处理
     Session.process();
@@ -118,6 +196,8 @@ Task<> server::deal(Connection conn){
         if(!remain)
             break;
     }
-
 }
 
+http_router server::m_http_route;
+
+} // end namespace rojcpp

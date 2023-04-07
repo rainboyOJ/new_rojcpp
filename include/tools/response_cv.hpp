@@ -108,6 +108,12 @@ namespace rojcpp {
         "<body><h1>404 Not Found</h1></body>"
         "</html>";
 
+    constexpr const char not_found_json[] =
+        "{"
+        "msg:\"not found\","
+        "code: 1"
+        "}";
+
     inline std::string_view internal_server_error =
         "<html>"
         "<head><title>Internal Server Error</title></head>"
@@ -162,6 +168,7 @@ namespace rojcpp {
     inline constexpr std::string_view rep_len = "Content-Length: ";
     inline constexpr std::string_view rep_crcf = "\r\n";
     inline constexpr std::string_view rep_server = "Server: rojcpp\r\n";
+    inline constexpr std::string_view header_end_sv = "\r\n";
 
     inline const char name_value_separator[] = { ':', ' ','\0' };
     //inline std::string_view crlf = "\r\n";

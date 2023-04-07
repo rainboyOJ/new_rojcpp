@@ -14,6 +14,7 @@
 
 #include "http_request.h"
 #include "http_response.h"
+#include "http_route.h"
 
 namespace rojcpp {
     
@@ -32,6 +33,11 @@ enum class PROCESS_STATE  {
 // 一个指向http_session内部的 成员函数指针
 using continue_work_fptr = PROCESS_STATE(http_session::*)();
 
+//调用route的函数
+using http_handle_func = std::function<void(request&,response&)> ;
+
+//调用route检查 的函数
+using http_handle_check_func = std::function<bool(request&,response&)>;
 
 class http_session {
     private:
@@ -40,12 +46,31 @@ class http_session {
         request  m_req;
         response m_res;
 
+        http_handle_func * m_http_handle = nullptr;
+        http_handle_check_func *  m_http_handle_check = nullptr;
+
+        //接口函数
+
         // http_handle //
+
     public:
 
-        http_session(std::pmr::memory_resource * mr) : 
-            m_pool{mr},m_req(mr),m_res(mr)
-        {}
+
+        explicit
+        http_session(std::pmr::memory_resource *mr ,
+                http_handle_func *  http_handle, // 指针
+                http_handle_check_func *  http_handle_check //指针
+                )
+        : m_http_handle(http_handle),
+          m_http_handle_check(http_handle_check),
+          m_pool{mr},m_req(mr),m_res(mr)
+        {
+
+        }
+
+
+        // API
+        // API end
 
         // http_session(tinyasync::Connection && conn) : m_ta_conn( std::move() )
         // {}
@@ -61,12 +86,23 @@ class http_session {
         //核心2 : 异步回应 --> 由外部读取 Res里的Buffer
         std::tuple<std::byte *,std::size_t> res_buff();
 
+        int parse_raw_request_data() { return m_req.parse_header();}
+
         //核心3: 数据处理与路由
         void process();
 
-        //解析读取的数据
-        int handle_read();
+        /**
+         * @brief 解析读取的数据
+         *
+         * @return 
+         */
+        int handle_read(request&,response&);
 
+        //处理字符串类型的body
+        int handle_string_body();
+
+        //执行路由
+        void route();
 
         
 };

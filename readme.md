@@ -13,6 +13,23 @@
 
 ```
 
+## 快速安装
+
+```bash
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+# 如果你想调试 : cmake -DCMAKE_BUILD_TYPE=Debug ..
+make
+```
+
+## 模块
+
+- http功能实现 `include/`
+- 日志 `libs/logger/`
+- 网络IO库 `libs/tinyasync/`
+- mysql连接池与操作封装
+- 简易Cache
+- 简单反射,json与struct互转
 
 ## 目录结构
 
@@ -57,4 +74,5 @@ flowchart TB
 
 ## 文档
 
+- [tinyasync的文档](./libs/tinyasync/doc)
 - [工具库utils.hpp](./docs/tools/utils.md)

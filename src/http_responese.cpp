@@ -59,5 +59,4 @@ void response::append_buff(const char * buff,const std::size_t buff_size) {
     m_buff.update_used_sized(buff_size);
 }
 
-
 } // end namespace rojcpp

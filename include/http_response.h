@@ -25,6 +25,15 @@ public:
         :m_buff(mpr)
     {}
 
+    template<status_type status>
+    constexpr auto set_status_and_header() 
+    {
+        // 类似 "HTTP/1.1 200 OK\r\n"
+        // constexpr std::string_view const status_str = to_rep_string(status);
+
+        // return sv_join_v<not,rep_server,header_end_sv>;
+    }
+
     /**
      * constexpr 编译期函数
      */
@@ -55,6 +64,40 @@ public:
         append_buff(content);
 
     }
+
+    template<status_type status,content_type content_type>
+    void set_status_and_content
+        (
+            const std::string & str,
+            content_encoding encoding = content_encoding::none 
+        )
+     {
+        // 类似 "HTTP/1.1 200 OK\r\n"
+        constexpr std::string_view status_str = to_rep_string(status);
+
+        // 类似 Content-type:application/json:
+        constexpr std::string_view type_str   = to_content_type_str(content_type);
+
+        // 类似 Content-length: 100
+        // type is std::array<char,int = 19>
+        int len_str = str.length();
+
+        m_buff.clear();
+        
+        append_buff(status_str);
+        append_buff(type_str);
+        append_buff(rep_server);
+        append_buff("content_length: ");
+        append_buff_number(len_str);
+        append_buff("\r\n\r\n");
+        append_buff(str.data(), len_str);
+     }
+
+    // >>>>  common API
+    void send_not_found() {
+        m_const_respone = sv_join_v<rep_not_found,rep_server,header_end_sv>;
+    }
+    // <<<< common API END
 
     //返回的数据
     std::string response_str();
@@ -104,6 +147,18 @@ private:
         append_buff(buff.data(), buff.length());
     }
 
+    void append_buff_number(std::size_t num) {
+        bool flag = 1;
+        char buf[512];
+        int idx = 0;
+        do {
+            buf[idx++] = num % 10;
+            num /= 10;
+        }while(num != 0);
+        std::reverse(buf, buf+idx);
+        append_buff(buf, idx);
+    }
+
     /**
      * 得到
      */
@@ -124,6 +179,8 @@ private:
     std::shared_ptr<cookie> cookie_sh_ptr = nullptr;
 
     rojcpp::Buffer<> m_buff;
+
+    std::string_view m_const_respone;
 };
 
 

@@ -18,6 +18,7 @@ add_subdirectory("all_headers")
 add_subdirectory("buffers")
 add_subdirectory("picohttparser")
 add_subdirectory("logger")
+add_subdirectory("utils")
 
 
 # target_link_libraries(test PRIVATE Threads::Threads)

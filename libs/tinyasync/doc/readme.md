@@ -51,9 +51,11 @@ flowchart
 
 `io_context`里有一个`m_task_queue`的队列结构用来管理task的存入与取出.
 
-`evt.dta.ptr`就是`callback`这个模拟虚类.调用它可以跳转到不同的函数去执行.
+`evt.data.ptr`就是`callback`这个模拟虚类.调用它可以跳转到不同的函数去执行.
 
 `task.h`,`awaiter.h`两个头文件是实现coroutine的主要位置.
+
+其它的头文件提供了另一些功能.
 
 
 ## 功能模块
@@ -67,6 +69,8 @@ flowchart
   - [`dns_resolve`](./dns_resolver.md) 域名转ip
 - [缓冲](./buffer.md)
 - [内存池](./memory_pool.md)
+- [线程锁与无锁队列](./mutex.md)
+- [其它: 异常,工具函数](./other.md)
 
 
 ## 概念/功能
