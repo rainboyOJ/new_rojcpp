@@ -23,9 +23,16 @@ elseif(build_type MATCHES release)
 endif()
 
 
+# 得到mysql的lib的配置
+execute_process(COMMAND mysql_config --cflags
+    OUTPUT_VARIABLE MYSQL_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process(COMMAND mysql_config --libs
+    OUTPUT_VARIABLE MYSQL_LIBS OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 include_directories(include)
 include_directories(libs)
 include_directories(libs/tinyasync/include)
+include_directories(libs/modern_cppdb/include)
 
 # add_subdirectory("some_fold")
 
@@ -33,3 +40,6 @@ aux_source_directory(src SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST} "./libs/logger/logger.cpp")
 
 # target_link_libraries(test PRIVATE Threads::Threads)
+
+target_link_libraries(${PROJECT_NAME} pthread ${MYSQL_LIBS} hiredis)
+target_compile_options(${PROJECT_NAME} PUBLIC ${MYSQL_CFLAGS})

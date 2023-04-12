@@ -1,5 +1,7 @@
 #include "server.h"
 #include "routes/user.hpp"
+#include "sql/query.hpp"
+#include "../__config.h"
 
 
 //>>>> async logger 
@@ -17,6 +19,7 @@ void global_flush() {}
 const int PORT = 8899;
 
 int main() {
+    
 
 
     //logger相关设置
@@ -31,7 +34,14 @@ int main() {
     LOGGER::logger::setFlush(global_flush);
 #endif
 
+    //1. 初始化路由的连接
+
+    const std::string connection_info_ = std::string(__config__::connection_info_);
+    cppdb::pool_manager::init(connection_info_);
+
     LOG_INFO << "rojcpp Server start at port : " << PORT ;
+
+
 
 //==== 注册路由
     {
