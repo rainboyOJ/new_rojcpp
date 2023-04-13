@@ -1,0 +1,7 @@
+{
+    "language": "1",
+    "pid": "1000",
+    "memoryLimit": 128,
+    "timeLimit": 1000,
+    "code":"/* author: Rainboy email: rainboylvx@qq.com  time: 2022年 03月 28日 星期一 16:21:39 CST */\n#include <bits/stdc++.h>\nusing namespace std;\ntypedef long long ll;\nconst int maxn = 1e6+5,maxe = 1e6+5; //点与边的数量\n\nint n,m;\n/* 定义全局变量 */\n\n\nint main(int argc,char * argv[]){\n    int a,b;\n    std::cin >> a >> b;\n    std::cout << a+b << std::endl;\n    return 0;\n}\n"
+}

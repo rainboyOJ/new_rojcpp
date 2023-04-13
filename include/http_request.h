@@ -50,12 +50,12 @@ class request {
         std::size_t header_len() const { return m_header_len; }
         void set_header_len(std::size_t val) { m_header_len = val;}
 
+        //得到body数据
+        std::string_view body();
         std::size_t body_len()   const { return m_body_len ; }
         void  set_body_len(std::size_t val) {m_body_len = val;}
 
         std::size_t total_len() const { return m_header_len + m_body_len;}
-
-        std::size_t total_len() { }
 
         //是否有content body
         bool has_body() const { return m_body_len !=0; } /* || is_chunked_*/

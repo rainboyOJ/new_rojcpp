@@ -1,4 +1,5 @@
 #include "http_session.h"
+#include "logger/logger.h"
 
 namespace rojcpp {
     
@@ -51,6 +52,7 @@ int http_session::handle_read(request& req,response & res) {
             case rojcpp::content_type::json:
             case rojcpp::content_type::unknown:
                 handle_string_body(); 
+                break;
             default: //not support ,error
                 throw std::runtime_error("not support content-type");
 
@@ -84,6 +86,7 @@ void http_session::route() {
 
 
 int http_session::handle_string_body() {
+    LOG_DEBUG << __FUNCTION__ ;
 
     //TODO do some check work
 

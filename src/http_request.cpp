@@ -39,6 +39,8 @@ int request::parse_header() {
     if(header_len < 0 ) // -1 mean parse erro or -2  mean not read completely
         return header_len;
 
+    set_header_len(header_len);
+
     //check_request();
 
     //check_gzip();
@@ -161,6 +163,11 @@ content_type request::get_content_type() const {
         return content_type::json;
 
     return content_type::unknown;
+}
+
+std::string_view request::body() {
+    // return std::string_view{m_buff.data() + header_len(),body_len()};
+    return {(char *)m_buff.data() + header_len(),body_len()};
 }
 
 } // end namespace rojcpp

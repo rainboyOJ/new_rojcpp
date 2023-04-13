@@ -33,6 +33,7 @@ include_directories(include)
 include_directories(libs)
 include_directories(libs/tinyasync/include)
 include_directories(libs/modern_cppdb/include)
+include_directories(libs/cppjson/include)
 
 # add_subdirectory("some_fold")
 

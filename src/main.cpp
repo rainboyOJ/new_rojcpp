@@ -2,6 +2,8 @@
 #include "routes/user.hpp"
 #include "sql/query.hpp"
 #include "../__config.h"
+#include "serializable.hpp"
+#include "jsonEnity/jsonEntiy.hpp"
 
 
 //>>>> async logger 
@@ -33,6 +35,9 @@ int main() {
     LOGGER::logger::setOutput(append_log_msg);
     LOGGER::logger::setFlush(global_flush);
 #endif
+    //1. 初始化cppjson
+    cppjson::Serializable::Regist<userRegistJson>();
+    cppjson::Serializable::Regist<userLoginJson>();
 
     //1. 初始化路由的连接
 
