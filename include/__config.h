@@ -29,6 +29,7 @@ struct __config__{
     static constexpr int  alarm_time = 30; //seconds
 
     //服务器起动的配置
+    static constexpr int server_size     = 1; //服务器数量
     static constexpr int port            = 8099;
     static constexpr int trigMode        = 0; // 暂时不能运行在ET模式,工作在LT模式
     static constexpr int timeoutMS       = 3*60*1000; //3分钟

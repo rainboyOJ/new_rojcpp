@@ -8,16 +8,143 @@
 - Event,事件
 - Condv
 
+
+```mermaid
+class
+LockCore
+Mutex
+  LockCore m_lockcore
+MutexLockAwaiter
+AdoptUniqueLock
+WaitAwaiter
+WaitCallback
+
+PostTask
+PostTaskEvent
+Event
+EventAwaiter
+Condv
+CondvAwaiter
+
+```
+
+`LockCore`是一切的基础
+
+`Mutex`建立在`LockCore`上
+
+`MutexLockAwaiter`与`Mutex`有什么关系?
+`AdoptUniqueLock`建立在`Mutex`上,它的作用是什么?
+`WaitAwaiter`建立在`Mutex`的基础上,它的作用是什么?
+
+`Event`建立在`IoContext ctx`上,似乎是建立我们自己的事件,可以通知Io中心
+
 ## LockCore
 
-本质上是一个无锁队列,但它特殊在,如果是第一次添加项目,也就是在队列是空的条件下添加项目
+LockCore的操作过程,分为两个阶段.
+
+第一阶段: **Lock Something**
+
+在这个阶段结束后,`enqueue`,
+
+- 为`false`表示,进入态为`X00`,也表示队列是第一次添加内容,
+- 为`true`表示,进入态为`X01 || X11`,进入时,队列不是第一次添加内容,可能为`que_locked`(`X11`)
+
+```mermaid
+graph TD
+
+    subgraph enqueue[enqueue == true]
+        ae{{if enqueue ==true}}
+        ae2[flag set que_locked]
+        ae2[old_flag clear que_locked]
+        ae-->ae1-->ae2;
+        de[flags <-- X11]
+        ee[old_flag <-- X01]
+        ae2-->de-->ee;
+    end
+    subgraph X00[进入态 X00]
+        a[old_flag <- X00]--setBit old_flag mtx_locked  -->b[flag <- X01 ];
+        b-->c[enqueue <-- false];
+        c--"m_flags.comapre_exchange(old_flag,flag)"-->d[m_flags <-- X01]
+    end
+
+    subgraph X01[进入态 X01]
+        a1[old_flag <- X01]--setBit old_flag mtx_locked  -->b1[flag <- X01 ];
+        b1-->c1[enqueue <-- true];
+        d1[m_flags <-X11];
+
+    end
+    
+    subgraph X11[进入态 X11]
+        a2[old_flag <- X11]--setBit old_flag mtx_locked  -->b2[flag <- X11 ];
+        b2-->c2[enqueue <-- true];
+        %%enqueue--"m_flags.comapre_exchange(old_flag,flag)"-->d2[m_flags <-- X01]
+        d2[m_flags <-X11];
+    end
+    c1 & c2-->enqueue;
+    ee --"m_flags.comapre_exchange(old_flag,flag)"--> d1 & d2;
+```
+
+
+
+状态变化
+
+```mermaid
+graph LR
+a[X00]-->b[X01];
+c[X01]-->e[X11];
+d[X11] --转换成 -->c;
+```
+
+`X11`表示`queue_locked`
+
+第二阶段,根据`enqueue`的值进入相应的处理
+
+- 为`false`,do nothing,最后返回`true`
+- 为`true`,队列添加节点,`m_flags`变成`101`,表示队列不为空,最后返回false
+
+
+**conclusion**
+
+第一次`try_lock`,会返回true,得到状态`001`,不会真正的把元素加入队列内
+所以,非第一次`try_lock`会把元素加入到队列内,返回`false`,得到状态`101`
+
+## unlock 过程
+
+`unlock(bool unlock_mtx_only_if_que_empty)` 表示从队列中取出元素,它的参数`unlock_mtx_only_if_que_empty`表示,取出元素时是否只在**取出元素后,队列为空时,才设置mtx位为0**
+
+- 返回`nullptr`表示队列中没有元素
+
+整个`unlock`的过程分为三个阶段
+
+1. 阶段1,加锁段,如果此时,发现队列为空,那么`return nullptr`
+2. 阶段2,取出队列中的元素
+3. 阶段3,解锁段 
+
 
 它的核心操作如下
 
-它是一个三元状态锁,对比于一般的无锁队列,有一点区别,**如何保证状态一样的时候,不会出错?**
+
+`LockCore`是一个无锁队列,完成多线程下的队列操作
+
+它的核心操作为:
+
+1. `try_lock(ListNode*)`,将`ListNode`加入队列
+2. `unlock()->ListNode *`,从队列中取出一个`ListNode`
+
+但它特殊在,如果是第一次添加项目,也就是在队列是空的条件下添加项目
 
 
-### `try_lock`
+`LockCore`是一个三元状态锁,三种状态为:`[mtx][que][que_notempty]`
+
+- `mtx`表示本身是否是**加锁态**
+- `que`表示队列是否是**加锁态**
+- `que_notempty`表示队列是否是**加锁态**
+
+一般的无锁队列只有一个**原子锁**,或者说**原子锁**只有一个状态,表示队列是否加锁.那为什么`LockCore`有三个状态呢?
+
+**如何保证状态一样的时候,不会出错?**
+
+### `try_lock`操作
 
 函数原型:`bool try_lock(ListNode * p)`
 
@@ -65,7 +192,7 @@ ListNode *unlock(bool unlock_mtx_only_if_que_empty)
   返回 nullptr
 ```
 
-## Mutex
+## 解析 Mutex与 MutexLockAwaiter
 
 - `MutexLockAwaiter`
 - `Mutex`
@@ -136,6 +263,29 @@ TODO
 
 - `PostTaskEvent`
 - `EventAwaiter`
+
+
+```mermaid
+class
+  class Event {
+      m_awaiter_que;
+      m_ctx : IoContext *;
+
+      static on_notify(PostTask *) -> void;
+      void notiy_one();
+      void notiy_all();
+  }
+```
+
+Event含有一个可以存所有`EventAwaiter`对应指针的队列.
+
+也就是说每一个`EventAwaiter`产生的时候,都会对应的Event对象`m_awaiter_que`队列里加入代表自己的指针.
+
+ctx里的PostTask队列执行的时候,应该调用`Event::void no_noity`,这样Event就可以有一回调函数,被ctx执行了
+
+`notify_one`,队列中取出一个`awaiter`指针,`notify_all`队列取出所有的`awaiter`指针
+设定PostTask,加入ctx的posttask队列,等待被执行.
+
 
 核心功能:
 

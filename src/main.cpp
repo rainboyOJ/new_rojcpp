@@ -1,9 +1,11 @@
 #include "server.h"
 #include "routes/user.hpp"
 #include "sql/query.hpp"
-#include "../__config.h"
+#include "__config.h"
 #include "serializable.hpp"
 #include "jsonEnity/jsonEntiy.hpp"
+#include "judge/judgeServerMediator.hpp"
+
 
 
 //>>>> async logger 

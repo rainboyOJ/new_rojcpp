@@ -74,6 +74,6 @@ flowchart TB
 
 ## 文档
 
-- [路由设计](./docs/routes.md)
+- [路由设计](./docs/route/readme.md)
 - [tinyasync的文档](./libs/tinyasync/doc)
 - [工具库utils.hpp](./docs/tools/utils.md)
