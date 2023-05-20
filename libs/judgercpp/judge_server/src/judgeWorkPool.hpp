@@ -149,7 +149,7 @@ void judgeWorkPool::judgeWork(){
 #endif
         if( jn.stage == JUDGE_STAGE::PREPARE){
 #ifdef JUDGE_SERVER_DEBUG
-            //std::cout << "stage 1" << std::endl;
+            std::cout << "stage 1" << std::endl;
 #endif
             work_stage1(jn);
         }
@@ -200,12 +200,15 @@ void judgeWorkPool::work_stage1(judge_Queue_node &jn){
         Problem p;
         if( jn.problem_path.length() == 0){
             p = Problem(__CONFIG::BASE_PROBLEM_PATH,jn.pid);
-            //for (const auto& e : p.input_data) {
-                //std::cout << e.first<< " " << e.second << std::endl;
-            //}
-            //for (const auto& e : p.output_data) {
-                //std::cout << e.first<< " " << e.second << std::endl;
-            //}
+#ifdef JUDGE_SERVER_DEBUG
+            std::cout << "problem data:" << "\n";
+            for (const auto& e : p.input_data) {
+                std::cout << e.first<< " " << e.second << std::endl;
+            }
+            for (const auto& e : p.output_data) {
+                std::cout << e.first<< " " << e.second << std::endl;
+            }
+#endif
         }
         else
             p = Problem(jn.problem_path);
@@ -216,7 +219,7 @@ void judgeWorkPool::work_stage1(judge_Queue_node &jn){
 #endif
         auto work_path = fs::path(__CONFIG::BASE_WORK_PATH) / uuid;
 
-        //std::filesystem::create_directories(work_path);
+        //创建 目标文件夹,dirRaii析构时,删除对应的目录
         directoryRAII dirRaii(work_path);
 
 
@@ -224,10 +227,12 @@ void judgeWorkPool::work_stage1(judge_Queue_node &jn){
 
         auto code_path = work_path / code_name ;
         writeFile(code_path.c_str(), jn.code);
-        //std::cout << "uuid " << uuid << std::endl;
+        std::cout << "after write file uuid " << uuid << std::endl;
         // 4 编译
         auto compile_args = compile_CPP_args(work_path, code_name);
         result res = __judger(compile_args);
+
+        // 4.1 编译是否失败
         if( res.result !=0 || res.error != 0  || res.exit_code != 0 ){
             std::string msg = readFile(compile_args.error_path.c_str());
             if( msg.length() == 0)

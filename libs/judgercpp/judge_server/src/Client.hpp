@@ -1,5 +1,13 @@
 /**
  * @brief 对client 进行封装
+ *
+ * Client类一个用于与judgeServer进行socket通信的类,它的作用是:
+ * - 创建与judgeServer的连接的socket
+ * - 与judgeServer通信
+ *    - 向judgeServer发送评测数据
+ *    - 接收从judgeServer返回的评测数据
+ *
+ * usage,使用方式:
  */
 
 #pragma once
@@ -48,6 +56,8 @@ public:
         Recv_th.join();
     }
     /**
+     * @desc: 发送评测数据
+     *
      * pid 评测的题目的id,也有可能是题目的路径
      * timeLimit
      * memoryLimit
@@ -63,11 +73,13 @@ public:
 
     void clear(); // 清空
 
+    //@desc: 设置 评测结果处理函数
     void set_result_handle(result_handler&& handle){
         __handle = std::move(handle);
     }
 
 private:
+    //使用 sockfd 连接judgeServer
     bool Connect(int sockfd);
 
     struct sockaddr_in servaddr;
@@ -171,8 +183,8 @@ Client::Client(std::size_t connect_size,std::string_view judge_server_ip,int por
             }
 
     } // end while
-            });
-}
+            }); // end thread
+} // end clien constructor
 
 bool Client::Connect(int sockfd) {
     int result= connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));

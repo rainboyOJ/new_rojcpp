@@ -103,6 +103,8 @@ Server::Server(int port,int socket_num,unsigned int judgeWorkSize)
     :port{port},socket_num{socket_num},_judgeWorkSize{judgeWorkSize},workPool{judgeWorkSize}
 {
     server_sockfd                  = socket(AF_INET, SOCK_STREAM, 0);//建立服务器端socket server_address.sin_family      = AF_INET;
+    bool enable = true;
+    setsockopt(server_sockfd, SOL_SOCKET, SO_REUSEADDR,&enable, sizeof(int));
     if( server_sockfd == -1){
         std::cerr << "create socket failed" << std::endl;
         Close();

@@ -41,10 +41,10 @@ public:
 
     friend std::ostream & operator<<(std::ostream & out,const MessageResultJudge & msgBuf);
 
-    auto get_code()            { return code; }
-    std::string_view get_key() { return key; }
-    std::string_view get_msg() { return msg; }
-    std::size_t results_size() { return Results.size();}
+    auto get_code()            const { return code; }
+    std::string_view get_key() const { return key; }
+    std::string_view get_msg() const { return msg; }
+    std::size_t results_size() const { return Results.size();}
 
     auto begin() const {
         return Results.begin();

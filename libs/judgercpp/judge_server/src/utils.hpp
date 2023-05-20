@@ -98,7 +98,7 @@ std::string readFile(const char * path){
 }
 
 //写入文件
-bool writeFile(const char * path,std::string_view code){
+void writeFile(const char * path,std::string_view code){
     std::ofstream file(path) ;
     file << code;
 }
