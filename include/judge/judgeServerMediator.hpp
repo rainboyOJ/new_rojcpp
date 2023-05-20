@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <list>
@@ -9,7 +8,7 @@
 #include <memory>
 #include <map>
 #include "ReadWriteLock.hpp"
-#include "judge_server/src/Client.hpp"
+#include "judgercpp/judge_server/src/Client.hpp"
 #include "server.h"
 #include "__config.h"
 
@@ -131,10 +130,9 @@ struct judgeMsg {};
  *
  *  与judgeServer 进行连接
  *
- *
- *     Client1 <---------> Mediator <-----------------> JudgeServer
+ *     Client1 <---------> 
+ *                          Mediator <-----------------> JudgeServer
  *     Client2 <--------->
- *
  *
  */
 
@@ -206,6 +204,31 @@ public:
         _abort.store(true);
     }
 
+    template<typename result_handle_type>
+    void set_result_handle(result_handle_type && handle) {
+        _client.set_result_handle(std::move(handle));
+    }
+
+    bool is_connnected() const {
+        return true;
+    }
+
+    /**
+     * @desc: 发送评测数据
+     *
+     * pid 评测的题目的id,也有可能是题目的路径
+     * timeLimit
+     * memoryLimit
+     * */
+    void send(
+            std::string_view key,
+            std::string_view code,
+            std::string_view language,
+            std::string_view pid,
+            int timeLimit,
+            int memoryLimit) 
+    { _client.send(key,code,language,pid,timeLimit,memoryLimit);}
+
 private:
 
     //工作线程循环
@@ -220,5 +243,9 @@ private:
 };
 
 
+//函数
+judgeServerMediator<rojcpp::server> & JSM() {
+    static judgeServerMediator<rojcpp::server> myJSM(__config__::server_size);
+    return myJSM;
+}
 
-judgeServerMediator<rojcpp::server> & JSM() ;

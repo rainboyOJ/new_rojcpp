@@ -6,6 +6,7 @@
 
 #pragma once
 #include <exception>
+#include <string>
 
 #include "serializable.hpp"
 #include "appException.hpp"
