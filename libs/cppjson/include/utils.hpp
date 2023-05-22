@@ -201,6 +201,49 @@ struct To_String <T,
     }
 };
 
+
+//将字符串unescap
+std::string unescape_string(std::string_view str) {
+    std::stringstream ss;
+    bool escape = false; //状态机
+    for(char c : str) {
+        if( escape ) {
+            switch( c ) {
+                case 'n':
+                    ss << '\n';
+                    break;
+                case 'r':
+                    ss << '\r';
+                    break;
+                case 't':
+                    ss << '\t';
+                    break;
+                case '\"':
+                    ss << '\"';
+                    break;
+                case '\'':
+                    ss << '\'';
+                    break;
+                case '\\':
+                    ss << '\\';
+                    break;
+                default:
+                    ss << '\\' << c;
+                    break;
+            }
+            escape = false;
+        }
+        else if ( c == '\\') {
+            escape = true;
+        }
+        else {
+            ss << c;
+        }
+
+    }
+    return ss.str();
+}
+
 template<typename T>
 struct To_String <T,
     std::enable_if_t< std::is_same_v<T, std::string>>
@@ -212,7 +255,8 @@ struct To_String <T,
             std::string_view value(str);
             if( value.front() == '\"' ) value.remove_prefix(1);
             if( value.back() == '\"' )  value.remove_suffix(1);
-            *reinterpret_cast<T*>(field) = std::string(value);
+            // *reinterpret_cast<T*>(field) = std::string(value);
+            *reinterpret_cast<T*>(field) = unescape_string(value);
         };
 #endif
         return std::string("\"") + object + std::string("\"");
