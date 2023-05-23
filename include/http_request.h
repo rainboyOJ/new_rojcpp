@@ -11,6 +11,8 @@ class http_session;
 
 namespace rojcpp {
 
+class http_session;
+
 enum class PARSE_HEADER_STATE : int {
     HAS_ERROR,
     NEED_READ,
@@ -20,11 +22,20 @@ class request {
 
     friend class http_session;
 
+    using http_session_ptr = http_session *;
+    private:
+        http_session_ptr m_session_ptr;
+
+
     public:
         
-        request(std::pmr::memory_resource * mrp )
-            : m_buff(mrp) 
+        request(std::pmr::memory_resource * mrp ,http_session_ptr sptr)
+            : m_buff(mrp),m_session_ptr(sptr)
         {}
+
+        http_session_ptr get_session_ptr () const {
+            return m_session_ptr;
+        }
 
         /**
          * 核心: 解析http头信息

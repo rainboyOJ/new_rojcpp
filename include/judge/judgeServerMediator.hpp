@@ -7,22 +7,29 @@
 #include <optional>
 #include <memory>
 #include <map>
+#include <chrono>
 #include "ReadWriteLock.hpp"
 #include "judgercpp/judge_server/src/Client.hpp"
-#include "server.h"
+// #include "server.h"
 #include "__config.h"
+
+struct judgeMsg {
+    std::chrono::steady_clock::time_point end_time;
+    int point; // 当前测试点, -1 表示所有的点
+    int all_point;// 所有测试点的数量,-1 表示不知道
+    int result_code; // 结果code,-12 表示编译错误
+    std::string res; // json形式的结果
+};
 
 /**
  * @desc 用来存评测结果的缓存容器
  * 自带有一个读写锁
  */
-template<typename Key,typename Value>
 class judgeCache
 {
 public:
-
-    using ShareValue = std::shared_ptr<Value>;
-
+    using Key = std::size_t;
+    using ShareValue = std::shared_ptr<judgeMsg>;
 private:
     RWLock _rwLock; //读写锁
 
@@ -57,9 +64,29 @@ public:
         _rwLock.unlock_write();
     }
 
-    void set(const Key k,ShareValue val) {
+    //创建一个 value
+    void create(std::size_t key,int point,int all_point,int result_code,std::string && res) {
         _rwLock.lock_write();
-        _map[k] = val;
+
+        auto c  = std::make_shared<judgeMsg>();
+        c->end_time = std::chrono::steady_clock::now() + std::chrono::seconds(60*5);
+        c->all_point = all_point;
+        c->point = point;
+        c->result_code = result_code;
+        c->res = std::move(res);
+        _map[key] = c;
+        _rwLock.unlock_write();
+    }
+
+    void check_expire() {
+        _rwLock.lock_write();
+        auto _now = std::chrono::steady_clock::now();
+        for( auto it = _map.begin(); it != _map.end() ; ) {
+            if( it->second->end_time < _now) {
+                it = _map.erase(it);
+            }
+            else ++it;
+        }
         _rwLock.unlock_write();
     }
 };
@@ -118,7 +145,6 @@ public:
 };
 
 
-struct judgeMsg {};
 
 
 /**
@@ -144,7 +170,7 @@ public:
     static constexpr int MaxSer = 32; //最多能接受32个Ser注册
     using SerPtr = Ser *; //服务器指针
     std::atomic<bool> _abort{false};
-    std::condition_variable t; //通知工作评测线程去评测
+    // std::condition_variable t; //通知工作评测线程去评测
 
 private:
     const int ctx_cnt; //连接ctx的数量
@@ -154,7 +180,7 @@ private:
     SidMapSer _sidMapSer;
     
     //2. 存评测结果的缓存容器
-    judgeCache<std::size_t,judgeMsg> _cache;
+    judgeCache _cache;
 
     //3: 评测客户端
     Client _client; //(std::size_t connect_size,std::string_view judge_server_ip,int port)
@@ -169,6 +195,10 @@ private:
 
 
 public:
+    ~judgeServerMediator() {
+        stop();
+    }
+
     //构造函数
     judgeServerMediator(int _ctx_cnt)
         : ctx_cnt(_ctx_cnt),
@@ -182,13 +212,26 @@ public:
         //清空
         for(int i = 0 ;i< MaxSer ;++i)
             _ser[i] = nullptr;
+
+        //创建一个不 检查线程
+        std::thread(&judgeServerMediator::work,this).detach();
     }
     
-    //使用 SerId 与 SerPtr 产生映射
-    void Register(int SerId,SerPtr ser);
+    //使用 ServerId 与 Server Pointer 产生映射
+    void Register(int SerId,SerPtr ser) {
+        if(SerId < 0 || SerId >= MaxSer) {
+            // LOG_ERROR << "SerId should below " <<MaxSer ; 
+            exit(0);
+        }
+        _ser[SerId] = ser;
+    }
 
     //得到评测信息的时候,会通知sid对应的SerId
     void add_listen(int SerId,std::size_t sid);
+
+    void create(std::size_t key,int point,int all_point,int result_code,std::string && res) {
+        _cache.create(key, point, all_point, result_code, std::move(res));
+    }
 
 
     // 添加评测
@@ -204,14 +247,14 @@ public:
         _abort.store(true);
     }
 
-    template<typename result_handle_type>
-    void set_result_handle(result_handle_type && handle) {
+    void set_result_handle(result_handler && handle) {
         _client.set_result_handle(std::move(handle));
     }
 
     bool is_connnected() const {
         return true;
     }
+
 
     /**
      * @desc: 发送评测数据
@@ -227,25 +270,25 @@ public:
             std::string_view pid,
             int timeLimit,
             int memoryLimit) 
-    { _client.send(key,code,language,pid,timeLimit,memoryLimit);}
+    { 
+        LOG_DEBUG << __FUNCTION__;
+        LOG_DEBUG << "key : " << key ;
+        LOG_DEBUG << "code : " << code ;
+        LOG_DEBUG << "language: " << language;
+        LOG_DEBUG << "pid : " << pid ;
+        LOG_DEBUG << "timeLimit: " << timeLimit;
+        _client.send(key,code,language,pid,timeLimit,memoryLimit);
+    }
 
 private:
 
     //工作线程循环
     void work( ) {
         while(_abort.load() == false) {
-
-            // 1. 读取评测队列中的值
-            // 2. 发送评测
-            // 3. 
+            //删除超时的数据
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            _cache.check_expire();
         }
     }
 };
-
-
-//函数
-judgeServerMediator<rojcpp::server> & JSM() {
-    static judgeServerMediator<rojcpp::server> myJSM(__config__::server_size);
-    return myJSM;
-}
 

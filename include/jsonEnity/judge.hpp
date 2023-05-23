@@ -8,7 +8,7 @@
 #include "appException.hpp"
 // #include "judge_server/src/Send.hpp"
 
-using namespace cppjson;
+//using namespace cppjson;
 
 struct judgeEntiy {
     std::string language;   //语言
@@ -17,9 +17,9 @@ struct judgeEntiy {
     int memoryLimit; //mb
     int timeLimit;   //ms
 
-    config get_config()const 
+    cppjson::config get_config()const 
     {
-        config config=Serializable::get_config(this);
+        cppjson::config config=cppjson::Serializable::get_config(this);
         config.update({
             {"language", language},
             {"code", code},

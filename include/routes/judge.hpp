@@ -2,9 +2,7 @@
  * @desc 发送评测的相关评测
  */
 #pragma once
-#include "http_route.h"
-#include "http_request.h"
-#include "http_response.h"
+#include "server.h"
 
 #include "jsonEnity/judge.hpp"
 // #include "judgeConnect.hpp"
@@ -30,6 +28,14 @@ struct judgeRoutes {
     // static void handleResultWS(request & req,response & res);
     // @desc 使用Get返回的信息 GET /judge_result?id=
     // static void handleResult(request & req,response & res);
+
+    //@desc lang str to int
+    // exit
+    static int lang_to_int(std::string_view lang_name) {
+        if( lang_name == "cpp"sv || lang_name == "c++"sv)
+            return 1;
+        return 0;
+    }
 
     template<typename Server>
     static void regist_route(){
@@ -85,12 +91,15 @@ void judgeRoutes::handleJudgeMsg(rojcpp::request &req, rojcpp::response &res){
 
     LOG_DEBUG << "language: " << judgeJson.language;
     // 1. 创建一个solutions
+    // TODO check language is suported or not
     unsigned long long solution_id
         = CURD::judgeTable::add_solutions(
                 // req.get_user_id(), //TODO Fix
                 62,
                 judgeJson.pid,
-                judgeJson.language);
+                // judgeJson.language
+                lang_to_int(judgeJson.language)
+                );
     LOG_DEBUG << "solution_id " << solution_id;
     // 2. 创建一个solution_codes
     CURD::judgeTable::add_solution_codes(solution_id, judgeJson.code);
@@ -100,10 +109,21 @@ void judgeRoutes::handleJudgeMsg(rojcpp::request &req, rojcpp::response &res){
     //TODO check language is suport
     // 1 cpp
     // 2 python3
-    res.set_status_and_content<status_type::ok, content_type::json>("{msg:\"ok\",code:1}");
 
     // 2 发送评测给judgeServer
+    auto server_ptr =  req.get_session_ptr() -> get_server_ptr() ;
+    std::string solution_id_str = std::to_string(solution_id);
+    server_ptr->send(
+            solution_id_str,
+            judgeJson.code,
+            judgeJson.language,
+            judgeJson.pid,
+            judgeJson.timeLimit,
+            judgeJson.memoryLimit
+            );
 
+
+    res.set_status_and_content<status_type::ok, content_type::json>("{msg:\"ok\",code:1}");
     /*
 
 

@@ -45,3 +45,7 @@ add_executable(${PROJECT_NAME} ${SRC_LIST} "./libs/logger/logger.cpp")
 
 target_link_libraries(${PROJECT_NAME} pthread ${MYSQL_LIBS} hiredis)
 target_compile_options(${PROJECT_NAME} PUBLIC ${MYSQL_CFLAGS})
+
+
+# judgeServer
+add_subdirectory(libs/judgercpp/judge_server)

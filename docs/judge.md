@@ -10,6 +10,26 @@ graph LR
     c-->b;
 ```
 
+`ctx`是httpServer,`judgeServer`是评测服务器,judgeMdiator是连接此两者的转发器.
+
+整个评测过程分为两个大的部分
+
+1. 提交评测.
+2. 监控评测服务器数据的返回
+
+对于1,多个httpServer前评测信息提交给judgeMdiator,judgeMdiator再提交给评测服务器.
+这很容易理解.评测服务器返回评测结果给judgeMdiator,judgeMdiator缓存结果一段时间.
+这些都是通过`push_judge`API完成
+
+
+对于2,这是最难的部分,它的流程如下
+
+1. 某一`ctx`向judgeMdiator注册sid与ctx的映射关系
+2. 某一`ctx`,`add_listen(ser_id,sid)`,告诉judgeMdiator,当有sid对应的评测结果返回的时候,通知(`notify_ser`)`ser_id`
+3. `ctx`得到通知后调用`get_judge_result(sid)` 得到对应的评测结果的拷贝
+4. `ctx`进行自己的过程
+
+
 ## 2. judgeMediator 设计
 
 `Mediator`:中介
@@ -18,7 +38,7 @@ graph LR
 classDiagram
     class judgeMediator {
         - container: map&lt;sid,ser&gt;
-        - judge_result_catch:catch
+        - judge_result_cache:cache
         - get_sid_corr_sers(sid)
         - notify_ser(ser_id,sid)
         + register(ser_id,&ser)

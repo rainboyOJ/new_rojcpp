@@ -1,9 +1,15 @@
 #include "server.h"
+
 #include "routes/user.hpp"
+#include "routes/judge.hpp"
+
 #include "sql/query.hpp"
 #include "__config.h"
 #include "serializable.hpp"
+
 #include "jsonEnity/jsonEntiy.hpp"
+
+
 #include "judge/judgeServerMediator.hpp"
 
 
@@ -40,8 +46,9 @@ int main() {
     //1. 初始化cppjson
     cppjson::Serializable::Regist<userRegistJson>();
     cppjson::Serializable::Regist<userLoginJson>();
+    cppjson::Serializable::Regist<judgeEntiy>();
 
-    //1. 初始化路由的连接
+    //2. 初始化数据库的连接
 
     const std::string connection_info_ = std::string(__config__::connection_info_);
     cppdb::pool_manager::init(connection_info_);
@@ -50,16 +57,22 @@ int main() {
 
 
 
-//==== 注册路由
+    //3. 注册路由
     {
         using namespace rojcpp;
-        USR_API::regist_route<server>(); //注册用户相关的路由
 
+        //注册用户相关的路由 /usr/*
+        USR_API::regist_route<server>(); 
+        judgeRoutes::regist_route<server>();
 
-        Acceptor myacc(Protocol::ip_v4(),Endpoint(Address::Any(),PORT));
-        server myserver(1,myacc);
-        myserver.run();
-        myserver.join();
+        //注册评测相关的路由 /judge/*
+
     }
+
+    tinyasync::Acceptor myacc(Protocol::ip_v4(),Endpoint(Address::Any(),PORT));
+    rojcpp::server myserver(1,myacc);
+    myserver.run();
+    myserver.join();
+
     return 0;
 }

@@ -96,6 +96,8 @@ int http_session::handle_string_body() {
     // else {
     //
     // }
+
+    return 0;
 }
 
 

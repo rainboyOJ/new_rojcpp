@@ -8,6 +8,7 @@
  *
  */
 
+#pragma once
 #include <string_view>
 #include "curd.h"
 
@@ -20,13 +21,13 @@ struct judgeTable {
     unsigned long long add_solutions(
             unsigned long long owner_id,
             std::string_view problem_id,
-            std::string_view lang)
+            int lang_int)
     {
         cppdb::query<"insert into solutions (owner_id,problem_id,lang)"
         "values(?,?,'?') RETURNING id;",unsigned long long> q;
         LOG_DEBUG << "before exec query api";
         unsigned solution_id = 
-            q << owner_id << problem_id << lang << cppdb::exec;
+            q << owner_id << problem_id << lang_int << cppdb::exec;
         LOG_DEBUG << "after exec query api";
         return solution_id;
     }

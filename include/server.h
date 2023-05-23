@@ -2,12 +2,19 @@
 
 #pragma once
 #include <iostream>
+#include <string_view>
 #include <thread>
 #include "tinyasync/tinyasync.h"
 #include "logger/AsyncLogger.hpp"
 #include "http_session.h"
 
 #include "http_route.h"
+
+// 评测转发中心
+#include "judge/judgeServerMediator.hpp"
+#include "judgercpp/judger.h"
+#include "judgercpp/src/utils.hpp"
+#include "curd/judgeTable.h"
 
 using namespace LOGGER;
 using namespace tinyasync;
@@ -16,6 +23,14 @@ namespace rojcpp {
     
 
 class Session;
+
+class server;
+
+//函数
+judgeServerMediator<rojcpp::server> & JSM() {
+   static judgeServerMediator<rojcpp::server> myJSM(__config__::server_size);
+   return myJSM;
+}
 
 class server {
     private:
@@ -36,6 +51,114 @@ class server {
 
         //服务器的初始化
         void init() {
+
+            //把server注册到 评测转发中心
+            JSM().Register(this->m_id,this);
+            JSM().set_result_handle( [this](MessageResultJudge & msg_result) {
+
+                    judgeResult_id jr_id = msg_result.get_code();
+
+                    //提交题目的sid
+                    std::string_view sid = msg_result.get_key();
+                    std::size_t int_sid = 0;
+                    std::from_chars(sid.data(),sid.data()+sid.size(),int_sid);
+                    std::string_view msg = msg_result.get_msg();
+                    // LOG_INFO << "judgeResult_id = " << msg_result.get_code_int() ;
+                    switch(jr_id) {
+                        case judgeResult_id::SUCCESS:
+                        {
+                            if ( msg.length() == 0 )
+                                break;
+                            if(  msg[0] == 'a') { // 通知所测试点的数量
+
+                            }
+                            else if( msg[0] == 'A') { // 最后一次发送全部的测试结果
+                                int final_result = 0;
+                                std::size_t sum_real_time = 0;
+                                std::size_t sum_cpu_time = 0;
+                                std::size_t sum_memory = 0;
+                                int right_size = 0;
+                                std::string mini_result{};
+                                std::string full_result = msg_result
+                                    .dump_to_json();
+
+                                int total_size = msg_result.results_size();
+                                mini_result.reserve(total_size);
+                                for( auto & e : msg_result ) {
+                                    sum_real_time += e.real_time;
+                                    sum_cpu_time += e.cpu_time;
+                                    sum_memory += e.memory;
+                                    if( final_result == 0&& e.result != 0 ) {
+                                        final_result = e.result;
+                                    }
+                                    if( e.result == RESULT_MEAN::ACCEPT)
+                                        ++right_size;
+                                    result_to_mini_result(e.result,mini_result);
+                                }
+
+                                int score = total_size == 0 ? 0 : 100*right_size/total_size;
+
+                                //把结果存入数据库
+                                CURD::judgeTable::update_solution(
+                                        sid,
+                                        final_result,
+                                        sum_cpu_time,
+                                        sum_memory,
+                                        score,
+                                        mini_result,
+                                        full_result
+                                        );
+                                LOG_DEBUG << "recv all point : " << full_result;
+                                //存入JSM
+                                JSM().create(int_sid,-1,total_size,final_result,std::move(full_result));
+
+                            }
+                            else if( msg[0] >='0' && msg[0] <='9') { //发送单个点
+                                int now_point = 0;
+                                int total_size = 0;
+                                int state = 1;
+                                for(char c : msg) {
+                                    if( c >='0' && c <= '9') {
+                                        if( state == 1)
+                                            now_point = now_point * 10 + c-'0';
+                                        else if( state == 2)
+                                            total_size= total_size* 10 + c-'0';
+                                    }
+                                    else if( state ==  1)
+                                        state = 2;
+                                    else break;
+                                }
+                                LOG_DEBUG << "recv single judge point: " << now_point
+                                    << msg_result.dump_to_json();
+                                //存入JSM
+                                JSM().create(int_sid,now_point,total_size,
+                                        msg_result.get_code()
+                                        ,msg_result.dump_to_json());
+
+                            }
+                            break;
+                        }
+                        case judgeResult_id::INVALID_CONFIG     ://= -1,
+                        case judgeResult_id::FORK_FAILED        :// = -2,
+                        case judgeResult_id::PTHREAD_FAILED     :// = -3,
+                        case judgeResult_id::WAIT_FAILED        :// = -4,
+                        case judgeResult_id::ROOT_REQUIRED      :// = -5,
+                        case judgeResult_id::LOAD_SECCOMP_FAILED:// = -6,
+                        case judgeResult_id::SETRLIMIT_FAILED   :// = -7,
+                        case judgeResult_id::DUP2_FAILED        :// = -8,
+                        case judgeResult_id::SETUID_FAILED      :// = -9,
+                        case judgeResult_id::EXECVE_FAILED      :// = -10,
+                        case judgeResult_id::SPJ_ERROR          :// = -11,
+                        case judgeResult_id::COMPILE_FAIL       :// = -12 // TODO
+                            //把结果存入数据库: 出错了
+                            break;
+                        default:
+                            //其它信息
+                            break;
+                    }
+                    
+                    //输出结果
+            });
 
             http_handle_check_  = [this](request& req,response & res){
                 try  {
@@ -81,6 +204,22 @@ class server {
             m_acceptor = acc.reset_io_context(m_ctx);
         }
 
+        /**
+         * @desc: 发送评测数据
+         *
+         * pid 评测的题目的id,也有可能是题目的路径
+         * timeLimit
+         * memoryLimit
+         * */
+        void send(
+                std::string_view key,
+                std::string_view code,
+                std::string_view language,
+                std::string_view pid,
+                int timeLimit,
+                int memoryLimit) 
+        { JSM().send(key,code,language,pid,timeLimit,memoryLimit);}
+
         Task<> deal(Connection s);
 
         //监听 连接
@@ -116,6 +255,10 @@ class server {
 };
 
 
+
+
+
+
 Task<> server::listen(IoContext & ctx){
     for(;;){
         Connection conn = co_await m_acceptor.async_accept();
@@ -135,7 +278,8 @@ Task<> server::deal(Connection conn){
     //1. 创建一个http_session
     rojcpp::http_session Session( std::pmr::new_delete_resource() ,
             &http_handle_, //执行 路由
-            &http_handle_check_ //执行并检查 路由
+            &http_handle_check_, //执行并检查 路由
+            this
             );
 
     //3.处理数据与路由

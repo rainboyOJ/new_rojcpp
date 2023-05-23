@@ -19,6 +19,8 @@
 namespace rojcpp {
     
 
+class server;
+
 // 处理状态
 enum class PROCESS_STATE  {
     TO_READ,
@@ -40,6 +42,7 @@ using http_handle_func = std::function<void(request&,response&)> ;
 using http_handle_check_func = std::function<bool(request&,response&)>;
 
 class http_session {
+    using serverClassPtr = server *;
     private:
         std::pmr::memory_resource * m_pool; //内存池
         continue_work_fptr m_continue_work = nullptr;
@@ -48,6 +51,8 @@ class http_session {
 
         http_handle_func * m_http_handle = nullptr;
         http_handle_check_func *  m_http_handle_check = nullptr;
+
+        serverClassPtr m_server_ptr;
 
         //接口函数
 
@@ -59,13 +64,18 @@ class http_session {
         explicit
         http_session(std::pmr::memory_resource *mr ,
                 http_handle_func *  http_handle, // 指针
-                http_handle_check_func *  http_handle_check //指针
+                http_handle_check_func *  http_handle_check, //指针
+                serverClassPtr  sptr
                 )
         : m_http_handle(http_handle),
           m_http_handle_check(http_handle_check),
-          m_pool{mr},m_req(mr),m_res(mr)
+          m_pool{mr},m_req(mr,this),m_res(mr),
+          m_server_ptr{sptr}
         {
+        }
 
+        serverClassPtr get_server_ptr () const {
+            return m_server_ptr;
         }
 
 

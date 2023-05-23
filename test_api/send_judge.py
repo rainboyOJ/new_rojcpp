@@ -8,8 +8,8 @@ from os import path,system
 
 json_path =  path.join( path.dirname(__file__),'send_judge.json' )
 dataJson = json.loads( open(json_path).read() ) #.splitlines() 
-# print(dataJson)
-
+# print(dataJson['code'])
+# exit(0)
 r = requests.post(baseUrl + 'handleJudge',json=dataJson,headers={'cookie':read_cookie()})
 print(r.json())
 

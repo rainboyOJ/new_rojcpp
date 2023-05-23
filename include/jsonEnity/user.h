@@ -11,7 +11,7 @@
 #include "serializable.hpp"
 #include "appException.hpp"
 
-using namespace cppjson;
+//using namespace cppjson;
 /**
  * 注册时使用
  */
@@ -22,9 +22,9 @@ struct userRegistJson {
     std::string school;
     std::string email;
 
-    config get_config()const 
+    cppjson::config get_config()const 
     {
-        config config=Serializable::get_config(this);
+        cppjson::config config=cppjson::Serializable::get_config(this);
         config.update({
             {"username", username},
             {"nickname", nickname},
@@ -43,9 +43,9 @@ struct userLoginJson {
     std::string username;
     std::string password;
 
-    config get_config() const
+    cppjson::config get_config() const
     {
-        config config=Serializable::get_config(this);
+        cppjson::config config=cppjson::Serializable::get_config(this);
         config.update({
             {"username", username},
             {"password", password},
