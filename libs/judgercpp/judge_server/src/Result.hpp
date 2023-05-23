@@ -41,10 +41,54 @@ public:
 
     friend std::ostream & operator<<(std::ostream & out,const MessageResultJudge & msgBuf);
 
-    auto get_code()            const { return code; }
+    // 得到int类型的code
+    int get_code_int()         const { return code; }
+    judgeResult_id get_code()  const { return code; }
+
     std::string_view get_key() const { return key; }
     std::string_view get_msg() const { return msg; }
     std::size_t results_size() const { return Results.size();}
+
+    std::string dump_to_json() const {
+        std::string str;
+        str += "[";
+        for( int i =0;i<Results.size() ;++i) {
+            str += '{';
+
+            str += "\"cpu_time\":";
+            str += std::to_string(Results[i].cpu_time);
+            str += ',';
+
+            str += "\"real_time\":";
+            str += std::to_string(Results[i].real_time);
+            str += ',';
+
+            str += "\"memory\":";
+            str += std::to_string(Results[i].memory);
+            str += ',';
+
+            str += "\"signal\":";
+            str += std::to_string(Results[i].signal);
+            str += ',';
+
+            str += "\"exit_code\":";
+            str += std::to_string(Results[i].exit_code);
+            str += ',';
+
+            str += "\"error\":";
+            str += std::to_string(Results[i].error);
+            str += ',';
+
+            str += "\"result\":";
+            str += std::to_string(Results[i].result);
+
+            str += '}';
+            if( i != Results.size() - 1)
+                str+= ',';
+        }
+        str += "]";
+        return str;
+    };
 
     auto begin() const {
         return Results.begin();

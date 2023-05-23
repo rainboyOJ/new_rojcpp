@@ -38,14 +38,6 @@ public:
     }
     void notify_all(); //唤醒所有
 
-    //加入数据进队列
-    bool enqueue(judge_Queue_node &jn){
-        //bool ret = judge_Queue::get().enque(jn);
-        //if( ret ) _task_cv.notify_one(); //唤醒一个
-        //return ret;
-    }
-
-
     // 评测
     result __judger(judge_args& args){
         std::stringstream ss;
@@ -155,7 +147,10 @@ void judgeWorkPool::judgeWork(){
         }
         // 因为设计的问题不出现state::JUDGING这个状态
         else if (jn.stage == JUDGE_STAGE::JUDGING ) {
-            std::cout << "stage 2" << std::endl; work_stage2(jn);
+#ifdef JUDGE_SERVER_DEBUG
+            std::cout << "stage 2" << std::endl; 
+#endif
+            work_stage2(jn);
         }
         //TODO 输出数据的内容
     }
@@ -220,7 +215,11 @@ void judgeWorkPool::work_stage1(judge_Queue_node &jn){
         auto work_path = fs::path(__CONFIG::BASE_WORK_PATH) / uuid;
 
         //创建 目标文件夹,dirRaii析构时,删除对应的目录
+#ifdef  JUDGE_SERVER_DEBUG
+        fs::create_directory(work_path);
+#else
         directoryRAII dirRaii(work_path);
+#endif
 
 
         const std::string code_name  = "main.code"; // 代码名
@@ -253,7 +252,7 @@ void judgeWorkPool::work_stage1(judge_Queue_node &jn){
         // 5 评测,依次评测
         auto Lang =  string_to_lang(jn.language);
 
-        MessageResultJudge sendALLmsg(jn.key,judgeResult_id::SUCCESS,"all");
+        MessageResultJudge sendALLmsg(jn.key,judgeResult_id::SUCCESS,"ALL");
         for (int i = 0 ;i< p.input_data.size() ; ++i) {
             auto & in_file  = std::get<std::string>(p.input_data[i]);
             auto & out_file = std::get<std::string>(p.output_data[i]);
@@ -265,6 +264,7 @@ void judgeWorkPool::work_stage1(judge_Queue_node &jn){
 
             std::ostringstream oss;
             oss << i << ","; //测试点的编号
+            oss << p.input_data.size() << ","; //所有测试点数量
             oss << getBaseName(in_file) << "," << getBaseName(out_file); //输入输出的名字
             MessageResultJudge sendmsg(jn.key,judgeResult_id::SUCCESS,oss.str());
 

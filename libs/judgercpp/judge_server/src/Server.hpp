@@ -164,7 +164,9 @@ void Server::run(){
 
 
         /*无限期阻塞，并测试文件描述符变动 */
-        result = select(FD_SETSIZE, &testfds, (fd_set *)0,(fd_set *)0, &timeout); //FD_SETSIZE：系统默认的最大文件描述符
+        // std::cout << "before select \n";
+        // result = select(FD_SETSIZE, &testfds, (fd_set *)0,(fd_set *)0, NULL); //FD_SETSIZE：系统默认的最大文件描述符
+        result = select(FD_SETSIZE, &testfds, NULL,NULL, NULL); //FD_SETSIZE：系统默认的最大文件描述符
         if(result < 0)
         {
             perror("server run");

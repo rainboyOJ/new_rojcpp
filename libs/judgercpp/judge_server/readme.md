@@ -54,3 +54,75 @@ src
 ## 使用方式
 
 客户端,具体看`client.cpp`
+
+向服务端发送一个评测时,当服务端面对下面的评测数据时
+
+```
+p1.in p1.ans
+p2.in p2.ans
+p3.in p3.ans
+```
+
+一共有三条评测数据,那么服务端返回的数据为
+
+```cpp
+enum judgeResult_id {
+    SUCCESS             = 0,
+    INVALID_CONFIG      = -1,
+    FORK_FAILED         = -2,
+    PTHREAD_FAILED      = -3,
+    WAIT_FAILED         = -4,
+    ROOT_REQUIRED       = -5,
+    LOAD_SECCOMP_FAILED = -6,
+    SETRLIMIT_FAILED    = -7,
+    DUP2_FAILED         = -8,
+    SETUID_FAILED       = -9,
+    EXECVE_FAILED       = -10,
+    SPJ_ERROR           = -11,
+    COMPILE_FAIL        = -12 // TODO
+};
+```
+
+注意发送的不是json数据,是MessageSendJudge这个类
+在准备阶段,
+
+```json
+{
+  "code": -1, // INVALID_CONFIG
+  "msg": "unsupport language: haskell"
+}
+```
+
+```json
+{
+  "code": -12, // COMPILE_FAIL
+  "msg": "compile fail msg,eg: invalid #include"
+}
+```
+
+```json
+{
+  "code": 0, //SUCCESS
+  "msg": "allSize 3" //测试点的数量
+}
+```
+
+发送每单个点的数据
+
+```json
+{
+  code:"?"
+  "msg":"1 p1.in p1.ans"
+  "result" : [result]
+}
+```
+
+最后发送一次全部的测试数据
+
+```
+{
+  code:"?"
+  "msg":"ALL",
+  "result" : [result1,result2,result3]
+}
+```

@@ -6,6 +6,8 @@
 #include <grp.h>
 #include <signal.h>
 
+#include <string>
+
 #include "judger.h"
 
 #ifdef DEBUG
@@ -63,3 +65,30 @@ inline bool __do_serlimit(
     if( not __do_serlimit(_config,&config::Member,value,LIMIT_Type) )\
             CHILD_ERROR_EXIT(SETRLIMIT_FAILED);
 
+
+inline void result_to_mini_result(int result,std::string & mini_result) {
+    switch(result) {
+        case RESULT_MEAN::WRONG_ANSWER :
+            mini_result += 'W';
+            break;
+        case RESULT_MEAN::ACCEPT :
+            mini_result += 'A';
+            break;
+        case RESULT_MEAN::CPU_TIME_LIMIT_EXCEEDED :
+        case RESULT_MEAN::REAL_TIME_LIMIT_EXCEEDED:
+            mini_result += 'T';
+            break;
+        case RESULT_MEAN::RUNTIME_ERROR:
+            mini_result += 'R';
+            break;
+        case RESULT_MEAN::MEMORY_LIMIT_EXCEEDED:
+            mini_result += 'M';
+            break;
+        case RESULT_MEAN::SYSTEM_ERROR:
+            mini_result += 'S';
+            break;
+        default:
+            mini_result += 'X'; //表示未知情况
+            break;
+    };
+}
